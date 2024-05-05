@@ -1,3 +1,8 @@
+# supabase-vector-tile
+
+Use MapLibre's `addProtocol` to visualize large PostGIS tables, by calling a custom function using the Supabase JS client.
+
+## Steps
 
 Use the Overture CLI to download places for a bounding box.
 
@@ -20,4 +25,12 @@ psql -h aws-0-us-west-1.pooler.supabase.com -p 5432 -d postgres -U postgres.ABCD
 
 Create a new Postgres Function with the body from [function.sql](function.sql) called `mvt`
 
-Edit `index.html` with your Supabase URL and anonymous key
+Modify that pl/pgsql function to include only the data you need to visualize, and consider NULLing some columns at low zooms to make tiles smaller.
+
+Edit `index.html` with your Supabase URL and anonymous key.
+
+You will also need an index on your `places` table:
+
+```
+CREATE INDEX webmercator ON public.places USING gist (st_transform(wkb_geometry, 3857))
+```
