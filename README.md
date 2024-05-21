@@ -22,13 +22,21 @@ PG_USE_COPY=true ogr2ogr -f pgdump places.sql places.geojson
 Enable PostGIS in your Supabase project:
 
 ```sql
-create extension postgis with schema extensions;
+CREATE EXTENSION IF NOT EXISTS "postgis" WITH SCHEMA "extensions";
 ```
 
 Import this as the `places` table in a Supabase database:
 
 ```
 psql -h aws-0-us-west-1.pooler.supabase.com -p 5432 -d postgres -U postgres.project-ref < places.sql
+```
+
+Enable Row level security and enable public read access:
+
+```sql
+ALTER TABLE "public"."places" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read access for all users" ON "public"."places" FOR SELECT USING (true);
 ```
 
 Create a new Postgres Function called `mvt` by running the SQL in [function.sql](function.sql).
