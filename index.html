@@ -1,162 +1,210 @@
 <html>
-    <head>
-        <title>Overture Places</title>
-        <meta charset="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" crossorigin="anonymous">
-        <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js" crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/protomaps-themes-base@2.0.0-alpha.5/dist/index.js"></script>
-        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-        <style>
-            body {
-                margin: 0;
-            }
-            #map {
-                height:100%; width:100%;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="map"></div>
-        <script type="text/javascript">
-            const client = supabase.createClient("https://nyfpjnshhoqwqeypvlgx.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55ZnBqbnNoaG9xd3FleXB2bGd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTE0OTQ5NzcsImV4cCI6MjAyNzA3MDk3N30.HZpf--Zz7DsjzejYB94VeakkTnNPoxlA6Uj5ROr5UKs");
+  <head>
+    <title>Overture Places</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://unpkg.com/protomaps-themes-base@2.0.0-alpha.5/dist/index.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+      body {
+        margin: 0;
+      }
+      #map {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script type="text/javascript">
+      const client = supabase.createClient(
+        'https://nyfpjnshhoqwqeypvlgx.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55ZnBqbnNoaG9xd3FleXB2bGd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTE0OTQ5NzcsImV4cCI6MjAyNzA3MDk3N30.HZpf--Zz7DsjzejYB94VeakkTnNPoxlA6Uj5ROr5UKs'
+      )
 
-            function base64ToArrayBuffer(base64) {
-                var binaryString = atob(base64);
-                var bytes = new Uint8Array(binaryString.length);
-                for (var i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                return bytes;
-            }
+      function base64ToArrayBuffer(base64) {
+        var binaryString = atob(base64)
+        var bytes = new Uint8Array(binaryString.length)
+        for (var i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        return bytes
+      }
 
-            maplibregl.addProtocol("supabase", async (params, abortController) => {
-                const re = new RegExp(/supabase:\/\/(.+)\/(\d+)\/(\d+)\/(\d+)/);
-                const result = params.url.match(re);
-                const { data, error } = await client.rpc('mvt', {z: result[2], x: result[3], y: result[4]})
-                const encoded = base64ToArrayBuffer(data);
-                 if (!error) {
-                     return { data: encoded }
-                 } else {
-                     throw new Error(`Tile fetch error:`);
-                 }
-            });
+      maplibregl.addProtocol('supabase', async (params, abortController) => {
+        const re = new RegExp(/supabase:\/\/(.+)\/(\d+)\/(\d+)\/(\d+)/)
+        const result = params.url.match(re)
+        const { data, error } = await client.rpc('mvt', {
+          z: result[2],
+          x: result[3],
+          y: result[4],
+        })
+        const encoded = base64ToArrayBuffer(data)
+        if (!error) {
+          return { data: encoded }
+        } else {
+          throw new Error(`Tile fetch error:`)
+        }
+      })
 
-            const map = new maplibregl.Map({
-                hash: true,
-                container: 'map',
-                style: {
-                    version:8,
-                    glyphs:'https://cdn.protomaps.com/fonts/pbf/{fontstack}/{range}.pbf',
-                    sources: {
-                        "supabase": {
-                            type: "vector",
-                            tiles: ["supabase://boston/{z}/{x}/{y}"],
-                            attribution: '© <a href="https://overturemaps.org">Overture Maps Foundation</a>'
-                        },
-                        "protomaps": {
-                            type: "vector",
-                            url: "https://api.protomaps.com/tiles/v3.json?key=1003762824b9687f",
-                            attribution: 'Basemap © <a href="https://openstreetmap.org">OpenStreetMap</a>'
-                        }
-                    },
-                    layers: [...protomaps_themes_base.noLabels("protomaps","black"),
-                    {
-                        'id':'overture-pois',
-                        'type':'circle',
-                        'source':'supabase',
-                        'source-layer':"places",
-                        'paint': {
-                            'circle-color':
-                                ['case',
-                                    ['==',['get','main_category'],'beauty_salon'],'#fb9a99',
-                                    ['==',['get','main_category'],'hotel'],'#33a02c',
-                                    ['==',['get','main_category'],'landmark_and_historical_building'],'#a6cee3',
-                                    ['==',['get','main_category'],'professional_services'],'#fdbf6f',
-                                    ['==',['get','main_category'],'shopping'],'#e31a1c',
-                                    ['==',['get','main_category'],'restaurant'],'#1f78b4',
-                                    ['==',['get','main_category'],'school'],'#ff7f00',
-                                    ['==',['get','main_category'],'accommodation'],'#b2df8a',
-                                    '#cab2d6'
-                                ],
-                            'circle-radius': [
-                                'interpolate',
-                                ['exponential',2],
-                                ['zoom'],
-                                0, 1, 
-                                19, 8 
-                            ],
-                            'circle-stroke-width': [
-                                'interpolate',
-                                ['exponential',2],
-                                ['zoom'],
-                                12, 0, 
-                                14, 2
-                            ],
-                            'circle-stroke-color':'black'
-                        }
-                    },
-                    {
-                        'id':'overture-pois-text',
-                        'type':'symbol',
-                        'source':'supabase',
-                        'source-layer':'places',
-                        'layout': {
-                            'text-field':"{primary_name}",
-                            'text-font':["Noto Sans Regular"],
-                            'text-size': 10
-                        },
-                        'paint': {
-                            'text-color':['case',
-                                    ['==',['get','main_category'],'beauty_salon'],'#fb9a99',
-                                    ['==',['get','main_category'],'hotel'],'#33a02c',
-                                    ['==',['get','main_category'],'landmark_and_historical_building'],'#a6cee3',
-                                    ['==',['get','main_category'],'professional_services'],'#fdbf6f',
-                                    ['==',['get','main_category'],'shopping'],'#e31a1c',
-                                    ['==',['get','main_category'],'restaurant'],'#1f78b4',
-                                    ['==',['get','main_category'],'school'],'#ff7f00',
-                                    ['==',['get','main_category'],'accommodation'],'#b2df8a',
-                                    '#cab2d6'
-                                ],
-                            'text-halo-width':1,
-                            'text-halo-color':'black'
-                        }
-                    }
-                    ]
-                }
-            });
+      const map = new maplibregl.Map({
+        hash: true,
+        container: 'map',
+        style: {
+          version: 8,
+          glyphs: 'https://cdn.protomaps.com/fonts/pbf/{fontstack}/{range}.pbf',
+          sources: {
+            supabase: {
+              type: 'vector',
+              tiles: ['supabase://boston/{z}/{x}/{y}'],
+              attribution:
+                '© <a href="https://overturemaps.org">Overture Maps Foundation</a>',
+            },
+            protomaps: {
+              type: 'vector',
+              url: 'https://api.protomaps.com/tiles/v3.json?key=1003762824b9687f',
+              attribution:
+                'Basemap © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+            },
+          },
+          layers: [
+            ...protomaps_themes_base.noLabels('protomaps', 'black'),
+            {
+              id: 'overture-pois',
+              type: 'circle',
+              source: 'supabase',
+              'source-layer': 'places',
+              paint: {
+                'circle-color': [
+                  'case',
+                  ['==', ['get', 'main_category'], 'beauty_salon'],
+                  '#fb9a99',
+                  ['==', ['get', 'main_category'], 'hotel'],
+                  '#33a02c',
+                  [
+                    '==',
+                    ['get', 'main_category'],
+                    'landmark_and_historical_building',
+                  ],
+                  '#a6cee3',
+                  ['==', ['get', 'main_category'], 'professional_services'],
+                  '#fdbf6f',
+                  ['==', ['get', 'main_category'], 'shopping'],
+                  '#e31a1c',
+                  ['==', ['get', 'main_category'], 'restaurant'],
+                  '#1f78b4',
+                  ['==', ['get', 'main_category'], 'school'],
+                  '#ff7f00',
+                  ['==', ['get', 'main_category'], 'accommodation'],
+                  '#b2df8a',
+                  '#cab2d6',
+                ],
+                'circle-radius': [
+                  'interpolate',
+                  ['exponential', 2],
+                  ['zoom'],
+                  0,
+                  1,
+                  19,
+                  8,
+                ],
+                'circle-stroke-width': [
+                  'interpolate',
+                  ['exponential', 2],
+                  ['zoom'],
+                  12,
+                  0,
+                  14,
+                  2,
+                ],
+                'circle-stroke-color': 'black',
+              },
+            },
+            {
+              id: 'overture-pois-text',
+              type: 'symbol',
+              source: 'supabase',
+              'source-layer': 'places',
+              layout: {
+                'text-field': '{primary_name}',
+                'text-font': ['Noto Sans Regular'],
+                'text-size': 10,
+              },
+              paint: {
+                'text-color': [
+                  'case',
+                  ['==', ['get', 'main_category'], 'beauty_salon'],
+                  '#fb9a99',
+                  ['==', ['get', 'main_category'], 'hotel'],
+                  '#33a02c',
+                  [
+                    '==',
+                    ['get', 'main_category'],
+                    'landmark_and_historical_building',
+                  ],
+                  '#a6cee3',
+                  ['==', ['get', 'main_category'], 'professional_services'],
+                  '#fdbf6f',
+                  ['==', ['get', 'main_category'], 'shopping'],
+                  '#e31a1c',
+                  ['==', ['get', 'main_category'], 'restaurant'],
+                  '#1f78b4',
+                  ['==', ['get', 'main_category'], 'school'],
+                  '#ff7f00',
+                  ['==', ['get', 'main_category'], 'accommodation'],
+                  '#b2df8a',
+                  '#cab2d6',
+                ],
+                'text-halo-width': 1,
+                'text-halo-color': 'black',
+              },
+            },
+          ],
+        },
+      })
 
-            const popup = new maplibregl.Popup({
-              closeButton: true,
-              closeOnClick: false,
-              maxWidth: "none",
-            });
+      const popup = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: 'none',
+      })
 
-            map.on('click', 'overture-pois-text', async (e) => {
-                if (e.features.length > 0) {
-                    const feature = e.features[0];
-                    console.log(feature);
-                    popup.setHTML(
-                        `
+      map.on('click', 'overture-pois-text', async (e) => {
+        if (e.features.length > 0) {
+          const feature = e.features[0]
+          console.log(feature)
+          popup.setHTML(
+            `
                         <table style="font-size:12px">
                             <tr>
-                                <td>name:</td>
-                                <td>${feature.properties.name}</td>
+                                <td>id:</td>
+                                <td>${feature.properties.id}</td>
                             </tr>
                             <tr>
-                                <td>confidence:</td>
-                                <td>${feature.properties['confidence']}</td>
+                                <td>name:</td>
+                                <td>${feature.properties.primary_name}</td>
                             </tr>
                             <tr>
                                 <td>main_category:</td>
                                 <td>${feature.properties.main_category}</td>
                             </tr>
                         </table>
-                        `);
-                    popup.setLngLat(e.lngLat);
-                    popup.addTo(map);
-                }
-            });
-        </script>
-    </body>
+                        `
+          )
+          popup.setLngLat(e.lngLat)
+          popup.addTo(map)
+        }
+      })
+    </script>
+  </body>
 </html>

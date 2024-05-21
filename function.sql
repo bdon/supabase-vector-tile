@@ -1,3 +1,7 @@
+CREATE OR REPLACE FUNCTION mvt(z integer, x integer, y integer)
+RETURNS text
+LANGUAGE plpgsql
+AS $$
 DECLARE
     mvt_output text;
 BEGIN
@@ -9,7 +13,11 @@ BEGIN
     -- Transform the geometries from EPSG:4326 to EPSG:3857 and clip them to the tile bounds
     mvtgeom AS (
         SELECT 
-            -- include the name only at zoom 13 to make low-zoom tiles smaller
+            -- include the name and id only at zoom 13 to make low-zoom tiles smaller
+            CASE 
+            WHEN z > 13 THEN id
+            ELSE NULL
+            END AS id,
             CASE 
             WHEN z > 13 THEN names::json->>'primary'
             ELSE NULL
@@ -33,3 +41,4 @@ BEGIN
 
     RETURN mvt_output;
 END;
+$$;
