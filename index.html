@@ -22,14 +22,19 @@
         height: 100%;
         width: 100%;
       }
+      span {
+        cursor: pointer;
+        color: blue;
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
     <script type="text/javascript">
       const client = supabase.createClient(
-        'https://nyfpjnshhoqwqeypvlgx.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55ZnBqbnNoaG9xd3FleXB2bGd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTE0OTQ5NzcsImV4cCI6MjAyNzA3MDk3N30.HZpf--Zz7DsjzejYB94VeakkTnNPoxlA6Uj5ROr5UKs'
+        'https://oqpomrkrcsqdrkgldhxl.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xcG9tcmtyY3NxZHJrZ2xkaHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU5MzM0NzYsImV4cCI6MjAzMTUwOTQ3Nn0.m3yb9gJc-ORC22H4vq_NwOyIpa_E8G1GjdemyHYEH8M'
       )
 
       function base64ToArrayBuffer(base64) {
@@ -179,6 +184,31 @@
         maxWidth: 'none',
       })
 
+      function loadDetails(element, id) {
+        element.innerHTML = 'loading...'
+        client
+          .from('places')
+          .select(
+            `
+          websites,
+          socials,
+          phones,
+          addresses,
+          source:  sources->0->dataset
+        `
+          )
+          .eq('id', id)
+          .single()
+          .then(({ data, error }) => {
+            if (error) return console.error(error)
+            element.parentElement.innerHTML = `<pre>${JSON.stringify(
+              data,
+              null,
+              2
+            )}</pre>`
+          })
+      }
+
       map.on('click', 'overture-pois-text', async (e) => {
         if (e.features.length > 0) {
           const feature = e.features[0]
@@ -197,6 +227,14 @@
                             <tr>
                                 <td>main_category:</td>
                                 <td>${feature.properties.main_category}</td>
+                            </tr>
+                            <tr>
+                                <td>details:</td>
+                                <td>
+                                  <span onclick="loadDetails(this, '${feature.properties.id}')">
+                                    load details
+                                  </span>
+                                </td>
                             </tr>
                         </table>
                         `
