@@ -22,6 +22,11 @@
         height: 100%;
         width: 100%;
       }
+      span {
+        cursor: pointer;
+        color: blue;
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
@@ -179,6 +184,31 @@
         maxWidth: 'none',
       })
 
+      function loadDetails(element, id) {
+        element.innerHTML = 'loading...'
+        client
+          .from('places')
+          .select(
+            `
+          websites,
+          socials,
+          phones,
+          addresses,
+          source:  sources->0->dataset
+        `
+          )
+          .eq('id', id)
+          .single()
+          .then(({ data, error }) => {
+            if (error) return console.error(error)
+            element.parentElement.innerHTML = `<pre>${JSON.stringify(
+              data,
+              null,
+              2
+            )}</pre>`
+          })
+      }
+
       map.on('click', 'overture-pois-text', async (e) => {
         if (e.features.length > 0) {
           const feature = e.features[0]
@@ -197,6 +227,14 @@
                             <tr>
                                 <td>main_category:</td>
                                 <td>${feature.properties.main_category}</td>
+                            </tr>
+                            <tr>
+                                <td>details:</td>
+                                <td>
+                                  <span onclick="loadDetails(this, '${feature.properties.id}')">
+                                    load details
+                                  </span>
+                                </td>
                             </tr>
                         </table>
                         `
