@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION mvt(z integer, x integer, y integer)
+CREATE OR REPLACE FUNCTION mvt(relation text, z integer, x integer, y integer)
 RETURNS text
 LANGUAGE plpgsql
 AS $$
@@ -36,7 +36,7 @@ BEGIN
             ST_Intersects(ST_Transform(wkb_geometry, 3857), bounds.geom)
     )
     -- Generate the MVT from the clipped geometries
-    SELECT INTO mvt_output encode(ST_AsMVT(mvtgeom, 'places', 4096, 'geom'),'base64')
+    SELECT INTO mvt_output encode(ST_AsMVT(mvtgeom, relation, 4096, 'geom'),'base64')
     FROM mvtgeom;
 
     RETURN mvt_output;
